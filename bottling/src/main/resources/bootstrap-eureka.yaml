@@ -1,0 +1,6 @@
+#spring.cloud.config.failFast: true
+spring:
+  cloud:
+    config:
+      discovery:
+        enabled: true

@@ -1,0 +1,12 @@
+#spring.cloud.config.failFast: true
+spring:
+  cloud:
+    config:
+      discovery:
+        enabled: true
+        serviceId: configserverrr
+eureka:
+  instance:
+    leaseRenewalIntervalInSeconds: 10
+  client:
+    registryFetchIntervalSeconds: 5

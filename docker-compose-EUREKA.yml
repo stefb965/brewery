@@ -2,10 +2,8 @@ aggregating:
   build: aggregating/build/docker
   environment:
     spring.profiles.active: eureka
-    spring.cloud.config.uri: http://configserver:8888
   links:
     - discovery
-    - configserver
   ports:
     - 9992:9992
 
@@ -13,10 +11,8 @@ maturing:
   build: maturing/build/docker
   environment:
     spring.profiles.active: eureka
-    spring.cloud.config.uri: http://configserver:8888
   links:
     - discovery
-    - configserver
   ports:
     - 9993:9993
 
@@ -24,10 +20,8 @@ bottling:
   build: bottling/build/docker
   environment:
     spring.profiles.active: eureka
-    spring.cloud.config.uri: http://configserver:8888
   links:
     - discovery
-    - configserver
   ports:
     - 9994:9994
 
@@ -35,10 +29,8 @@ presenting:
   build: presenting/build/docker
   environment:
     spring.profiles.active: eureka
-    spring.cloud.config.uri: http://configserver:8888
   links:
     - discovery
-    - configserver
   ports:
     - 9991:9991
 
@@ -46,10 +38,8 @@ zuul:
   build: zuul/build/docker
   environment:
     spring.profiles.active: eureka
-    spring.cloud.config.uri: http://configserver:8888
   links:
     - discovery
-    - configserver
   ports:
     - 9995:9995
 
@@ -57,15 +47,17 @@ ingredients:
   build: ingredients/build/docker
   environment:
     spring.profiles.active: eureka
-    spring.cloud.config.uri: http://configserver:8888
   links:
     - discovery
-    - configserver
   ports:
     - 9996:9996
 
 configserver:
   build: config-server/build/docker
+  environment:
+    spring.profiles.active: eureka
+  links:
+    - discovery
   ports:
     - 8888:8888
 

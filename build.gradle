@@ -149,6 +149,8 @@ configure(subprojects - techProjects) {
 
         compile "org.springframework.boot:spring-boot-starter-web"
         compile "org.springframework.boot:spring-boot-starter-actuator"
+        compile "org.springframework.boot:spring-boot-starter-aop"
+        compile 'org.springframework.retry:spring-retry'
         compile "org.springframework:spring-context-support"
         compile 'com.fasterxml.jackson.core:jackson-databind'
         if (!whatToTest('CONSUL') && !whatToTest('EUREKA')) {
@@ -171,7 +173,7 @@ configure(subprojects - techProjects) {
     }
 
     wrapper {
-        gradleVersion '2.9'
+        gradleVersion '2.10'
     }
 
     bootRun {

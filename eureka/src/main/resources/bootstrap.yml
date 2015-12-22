@@ -1,3 +1,9 @@
 spring:
   application:
     name: discovery
+
+eureka:
+  instance:
+    leaseRenewalIntervalInSeconds: 10
+  client:
+    registryFetchIntervalSeconds: 5

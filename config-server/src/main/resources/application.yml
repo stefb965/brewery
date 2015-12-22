@@ -13,5 +13,7 @@ spring:
         git:
           uri: https://github.com/spring-cloud-samples/brewery.git
           searchPaths: git-props
+  application:
+    name: configserverrr
 
 spring.zipkin.enabled: false

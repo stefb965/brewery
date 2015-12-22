@@ -24,12 +24,20 @@ PORT_TO_CHECK=8888
 
 docker-compose -f $dockerComposeFile up -d configserver
 
-echo "Waiting for the Config Server app to boot for [$(( WAIT_TIME * RETRIES ))] seconds"
+echo -e "\n\nWaiting for the Config Server app to boot for [$(( WAIT_TIME * RETRIES ))] seconds"
 for i in $( seq 1 "${RETRIES}" ); do
     sleep "${WAIT_TIME}"
     curl -m 5 "${HEALTH_HOST}:${PORT_TO_CHECK}/health" && READY_FOR_TESTS="yes" && break
     echo "Fail #$i/${RETRIES}... will try again in [${WAIT_TIME}] seconds"
 done
+
+echo -e "\n\nChecking for the presence of config server in Service Discovery for [$(( WAIT_TIME * RETRIES ))] seconds"
+for i in $( seq 1 "${RETRIES}" ); do
+    sleep "${WAIT_TIME}"
+    curl -m 5 http://localhost:8888/health | grep "\"services\":\[\"configserverrr\"\]" && READY_FOR_TESTS="yes" && break
+    echo "Fail #$i/${RETRIES}... will try again in [${WAIT_TIME}] seconds"
+done
+
 
 if [[ "${READY_FOR_TESTS}" == "no" ]] ; then
     echo "Config server failed to start..."
