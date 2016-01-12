@@ -2,7 +2,6 @@ brewing:
   build: brewing/build/docker
   links:
     - zookeeper:zk
-    - collector:ck
     - configserver
     - rabbitmq
   environment:
@@ -18,7 +17,6 @@ presenting:
   build: presenting/build/docker
   links:
     - zookeeper:zk
-    - collector:ck
     - configserver
     - rabbitmq
   environment:
@@ -34,7 +32,6 @@ zuul:
   build: zuul/build/docker
   links:
     - zookeeper:zk
-    - collector:ck
     - configserver
     - rabbitmq
   environment:
