@@ -28,9 +28,9 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.SpringApplicationContextLoader
 import org.springframework.cloud.sleuth.Span
+import org.springframework.cloud.sleuth.util.RandomLongSpanIdGenerator
 import org.springframework.http.*
 import org.springframework.test.context.ContextConfiguration
-import org.springframework.util.JdkIdGenerator
 import org.springframework.web.client.RestTemplate
 import spock.lang.Specification
 
@@ -70,7 +70,7 @@ abstract class AbstractBreweryAcceptanceSpec extends Specification implements Sl
 		log.info("Finished test")
 	}
 
-	void beer_has_been_brewed_for_process_id(String processId) {
+	void beer_has_been_brewed_for_process_id(Long processId) {
 		await().pollInterval(pollInterval, SECONDS).atMost(timeout, SECONDS).until(new Runnable() {
 			@Override
 			void run() {
@@ -120,7 +120,7 @@ abstract class AbstractBreweryAcceptanceSpec extends Specification implements Sl
 		})
 	}
 
-	ResponseEntity<String> checkStateOfTheProcess(String processId) {
+	ResponseEntity<String> checkStateOfTheProcess(Long processId) {
 		URI uri = URI.create("$PRESENTING_SERVICE_URL/feed/process/$processId")
 		log.info("Sending request to the presenting service [$uri] to check the beer brewing process. The process id is [$processId]")
 		return restTemplate().exchange(
@@ -154,11 +154,11 @@ abstract class AbstractBreweryAcceptanceSpec extends Specification implements Sl
 		return httpEntity.headers.getFirst(TRACE_ID_HEADER_NAME)
 	}
 
-	RequestEntity an_order_for_all_ingredients_with_process_id(String processId, CommunicationType communicationType) {
+	RequestEntity an_order_for_all_ingredients_with_process_id(Long processId, CommunicationType communicationType) {
 		HttpHeaders headers = new HttpHeaders()
-		headers.add("PROCESS-ID", processId)
-		headers.add(TRACE_ID_HEADER_NAME, processId)
-		headers.add(SPAN_ID_HEADER_NAME, new JdkIdGenerator().generateId().toString())
+		headers.add("PROCESS-ID", String.valueOf(processId))
+		headers.add(TRACE_ID_HEADER_NAME, String.valueOf(processId))
+		headers.add(SPAN_ID_HEADER_NAME, String.valueOf(new RandomLongSpanIdGenerator().generateId()))
 		headers.add("TEST-COMMUNICATION-TYPE", communicationType.name())
 		URI uri = URI.create("$PRESENTING_SERVICE_URL/present/order")
 		Order allIngredients = allIngredients()
