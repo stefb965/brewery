@@ -22,4 +22,4 @@ env:
   global:
   - TERM=dumb
   - SHOULD_START_RABBIT=no
-  - RETRIES=200
+  - MEM_ARGS="-Xmx256m -Xss2048k"
