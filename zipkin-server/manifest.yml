@@ -1,7 +1,7 @@
 ---
 applications:
 - name: zipkin-server
-  memory: 64M
+  memory: 512M
   instances: 1
   host: zipkin-server-${random-word}
   path: build/libs/zipkin-server-1.0.0.jar

@@ -2,7 +2,8 @@
 
 set -e
 
-source ${BUILD_DIRECTORY:-build}/scripts/cf-common.sh
+source ${BUILD_DIRECTORY:-.}/scripts/cf-common.sh
+root=`pwd`
 
 READY_FOR_TESTS="no"
 echo "Waiting for RabbitMQ to boot for [$(( WAIT_TIME * RETRIES ))] seconds"
@@ -18,7 +19,7 @@ fi
 
 READY_FOR_TESTS="no"
 echo "Waiting for Zookeeper to boot for [$(( WAIT_TIME * RETRIES ))] seconds"
-cf s | grep "discovery" && cf ds -f "discovery"
+cf s | grep "zookeeper" && cf ds -f "zookeeper"
 deploy_service "zookeeper" && READY_FOR_TESTS="yes"
 
 if [[ "${READY_FOR_TESTS}" == "no" ]] ; then
@@ -39,8 +40,7 @@ if [[ "${READY_FOR_TESTS}" == "no" ]] ; then
     exit 1
 fi
 
-cd `dirname $0`
-root=`pwd`/tracing
+cd $root
 
 # deploy zipkin-server
 echo -e "\n\nBooting up Zipkin Server"

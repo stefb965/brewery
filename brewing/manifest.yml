@@ -1,7 +1,7 @@
 ---
 applications:
 - name: brewing
-  memory: 64M
+  memory: 512M
   instances: 1
   host: brewing-${random-word}
   path: build/libs/brewing-1.0.0.jar

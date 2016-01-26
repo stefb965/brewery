@@ -1,7 +1,7 @@
 ---
 applications:
 - name: discovery
-  memory: 64M
+  memory: 512M
   instances: 1
   host: eureka-${random-word}
   path: build/libs/eureka-1.0.0.jar

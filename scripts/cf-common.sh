@@ -31,3 +31,10 @@ function deploy_service(){
     JSON='{"uri":"http://'$D'"}'
     cf create-user-provided-service $N -p $JSON
 }
+
+function reset(){
+    app_name=$1
+    echo "going to remove ${app_name} if it exists"
+    cf apps | grep $app_name && cf d -f $app_name
+    echo "deleted ${app_name}"
+}
