@@ -1,0 +1,10 @@
+---
+applications:
+- name: discovery
+  memory: 64M
+  instances: 1
+  host: eureka-${random-word}
+  path: build/libs/eureka-1.0.0.jar
+  env:
+    SPRING_PROFILES_ACTIVE: cloud
+    DEBUG: "true"

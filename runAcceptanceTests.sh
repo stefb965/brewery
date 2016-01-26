@@ -133,7 +133,7 @@ MEM_ARGS="-Xmx64m -Xss1024k"
 BOM_VERSION_PROP_NAME="BOM_VERSION"
 
 # Parse the script arguments
-while getopts ":t:v:h:n:r:k:n:x:s" opt; do
+while getopts ":t:v:h:n:r:k:n:x:s:c" opt; do
     case $opt in
         t)
             WHAT_TO_TEST="${OPTARG}"
@@ -161,6 +161,9 @@ while getopts ":t:v:h:n:r:k:n:x:s" opt; do
             ;;
         s)
             SKIP_BUILDING=1
+            ;;
+        c)
+            CLOUD_FOUNDRY=1
             ;;
         \?)
             echo "Invalid option: -$OPTARG" >&2
@@ -196,6 +199,7 @@ NO_TESTS=${NO_TESTS}
 NO_BUILD=${NO_BUILD}
 SHOULD_START_RABBIT=${SHOULD_START_RABBIT}
 ACCEPTANCE_TEST_OPTS=${ACCEPTANCE_TEST_OPTS}
+CLOUD_FOUNDRY=${CLOUD_FOUNDRY}
 
 EOF
 
@@ -211,6 +215,7 @@ export LOCALHOST=$LOCALHOST
 export MEM_ARGS=$MEM_ARGS
 export SHOULD_START_RABBIT=$SHOULD_START_RABBIT
 export ACCEPTANCE_TEST_OPTS=$ACCEPTANCE_TEST_OPTS
+export CLOUD_FOUNDRY=$CLOUD_FOUNDRY
 
 export -f tail_log
 export -f print_docker_logs
@@ -259,7 +264,11 @@ fi
 
 # Run the initialization script
 INITIALIZATION_FAILED="yes"
-. ./docker-compose-$WHAT_TO_TEST.sh && INITIALIZATION_FAILED="no"
+if [[ -z "${CLOUD_FOUNDRY}" ]] ; then
+        . ./docker-compose-$WHAT_TO_TEST.sh && INITIALIZATION_FAILED="no"
+    else
+        . ./cloud-foundry-$WHAT_TO_TEST.sh && INITIALIZATION_FAILED="no"
+fi
 
 if [[ "${INITIALIZATION_FAILED}" == "yes" ]] ; then
     echo "\n\nFailed to initialize the apps!"

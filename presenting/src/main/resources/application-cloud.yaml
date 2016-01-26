@@ -1,0 +1,2 @@
+spring.rabbitmq.addresses: ${vcap.services.rabbitmq.credentials.uri}
+spring.cloud.zookeeper.connectString: ${vcap.services.discovery.credentials.uri}:2181

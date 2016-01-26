@@ -1,0 +1,13 @@
+---
+applications:
+- name: zipkin-server
+  memory: 64M
+  instances: 1
+  host: zipkin-server-${random-word}
+  path: build/libs/zipkin-server-1.0.0.jar
+  services:
+    - rabbitmq
+    - mysql
+  env:
+    SPRING_PROFILES_ACTIVE: cloud
+    DEBUG: "true"
