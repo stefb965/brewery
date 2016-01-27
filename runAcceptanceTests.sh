@@ -10,7 +10,7 @@ function tail_log() {
     if [[ -z "${CLOUD_FOUNDRY}" ]] ; then
         tail -n $NUMBER_OF_LINES_TO_LOG build/"$1".log || echo "Failed to open log"
     else
-        cf logs "$1" --recent
+        cf logs "brewery-$1" --recent
     fi
 }
 
@@ -107,15 +107,15 @@ function kill_all_apps() {
             kill_and_log "zipkin-server"
             docker kill $(docker ps -q) || echo "No running docker containers are left"
         else
-            reset "brewing"
-            reset "zuul"
-            reset "presenting"
-            yes | cf delete-service "config-server"
-            reset "config-server"
-            yes | cf delete-service "discovery"
-            reset "discovery"
-            reset "zipkin-server"
-            reset "zipkin-web"
+            reset "brewery-brewing"
+            reset "brewery-zuul"
+            reset "brewery-presenting"
+            yes | cf delete-service "brewery-config-server"
+            reset "brewery-config-server"
+            yes | cf delete-service "brewery-discovery"
+            reset "brewery-discovery"
+            reset "brewery-zipkin-server"
+            reset "brewery-zipkin-web"
             yes | cf delete-orphaned-routes
     fi
     return 0

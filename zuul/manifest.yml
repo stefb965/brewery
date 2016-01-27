@@ -1,14 +1,14 @@
 ---
 applications:
-- name: zuul
+- name: brewery-zuul
   memory: 512M
   instances: 1
-  host: zuul
+  host: brewery-zuul
   path: build/libs/zuul-1.0.0.jar
   services:
-    - rabbitmq
-    - discovery
-    - config-server
+    - brewery-rabbitmq
+    - brewery-discovery
+    - brewery-config-server
   env:
     SPRING_PROFILES_ACTIVE: cloud
     DEBUG: "true"

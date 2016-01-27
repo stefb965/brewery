@@ -1,9 +1,9 @@
 ---
 applications:
-- name: discovery
+- name: brewery-discovery
   memory: 512M
   instances: 1
-  host: discovery-${random-word}
+  host: brewery-discovery
   path: build/libs/eureka-1.0.0.jar
   env:
     SPRING_PROFILES_ACTIVE: cloud

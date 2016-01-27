@@ -1,12 +1,12 @@
 ---
 applications:
-- name: config-server
+- name: brewery-config-server
   memory: 512M
   instances: 1
-  host: config-server-${random-word}
+  host: brewery-config-server
   path: build/libs/config-server-1.0.0.jar
   services:
-    - discovery
+    - brewery-discovery
   env:
     SPRING_PROFILES_ACTIVE: cloud
     DEBUG: "true"

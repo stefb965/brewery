@@ -1,6 +1,6 @@
 ---
 applications:
-- name: zipkin-web
+- name: brewery-zipkin-web
   memory: 1024M
-  host: zipkin-web-${random-word}
+  host: brewery-zipkin-web
   path: lib/zipkin-web-all.jar

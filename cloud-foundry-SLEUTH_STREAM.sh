@@ -12,7 +12,7 @@ if [[ -z "${DEPLOY_ONLY_APPS}" ]] ; then
     READY_FOR_TESTS="no"
     echo "Waiting for RabbitMQ to boot for [$(( WAIT_TIME * RETRIES ))] seconds"
     # create RabbitMQ
-    APP_NAME=rabbitmq
+    APP_NAME=brewery-rabbitmq
     cf s | grep ${APP_NAME} && echo "found ${APP_NAME}" && READY_FOR_TESTS="yes" ||
         cf cs cloudamqp lemur ${APP_NAME} && echo "Started RabbitMQ" && READY_FOR_TESTS="yes"
 
@@ -25,9 +25,9 @@ if [[ -z "${DEPLOY_ONLY_APPS}" ]] ; then
 
     READY_FOR_TESTS="no"
     echo "Waiting for Eureka to boot for [$(( WAIT_TIME * RETRIES ))] seconds"
-    cf s | grep "discovery" && cf ds -f "discovery"
-    deploy_app_with_name "eureka" "discovery" && READY_FOR_TESTS="yes"
-    deploy_service "discovery" && READY_FOR_TESTS="yes"
+    cf s | grep "brewery-discovery" && cf ds -f "brewery-discovery"
+    deploy_app_with_name "eureka" "brewery-discovery" && READY_FOR_TESTS="yes"
+    deploy_service "brewery-discovery" && READY_FOR_TESTS="yes"
 
     if [[ "${READY_FOR_TESTS}" == "no" ]] ; then
         echo "Eureka failed to start..."
@@ -42,7 +42,7 @@ if [[ -z "${DEPLOY_ONLY_APPS}" ]] ; then
     echo -e "\n\nBooting up MySQL"
     READY_FOR_TESTS="no"
     # create MySQL DB
-    APP_NAME=mysql
+    APP_NAME=brewery-mysql
     cf s | grep ${APP_NAME} && echo "found ${APP_NAME}" && READY_FOR_TESTS="yes" ||
         cf cs cleardb spark ${APP_NAME} && echo "Started ${APP_NAME}" && READY_FOR_TESTS="yes"
 
@@ -56,9 +56,10 @@ if [[ -z "${DEPLOY_ONLY_APPS}" ]] ; then
 
     echo -e "\n\nDeploying Zipkin Server"
     zq=zipkin-server
+    ZQ_APP_NAME="brewery-$zq"
     cd $root/$zq
-    reset $zq
-    cf d -f $zq
+    reset $ZQ_APP_NAME
+    cf d -f $ZQ_APP_NAME
     cd $root/zipkin-server
     cf push && READY_FOR_TESTS="yes"
 
@@ -71,16 +72,17 @@ if [[ -z "${DEPLOY_ONLY_APPS}" ]] ; then
     # ====================================================
     echo -e "\n\nDeploying Zipkin Web"
     zw=zipkin-web
-    reset $zw
-    cf d -f $zw
-    zqs_name=`app_domain $zq`
-    echo -e "Zipkin Web server host is [${zqs_name}]"
+    ZW_APP_NAME="brewery-$zw"
+    reset $ZW_APP_NAME
+    cf d -f $ZW_APP_NAME
+    zqs_name=`app_domain $ZQ_APP_NAME`
+    echo -e "Zipkin Query server host is [${zqs_name}]"
     cd $root/zipkin-web
     cf push --no-start
     jcjm=`$root/scripts/zipkin-deploy-helper.py $zqs_name`
     echo -e "Setting env vars [${jcjm}]"
-    cf set-env $zw JBP_CONFIG_JAVA_MAIN "${jcjm}"
-    cf restart $zw && READY_FOR_TESTS="yes"
+    cf set-env $ZW_APP_NAME JBP_CONFIG_JAVA_MAIN "${jcjm}"
+    cf restart $ZW_APP_NAME && READY_FOR_TESTS="yes"
 
     if [[ "${READY_FOR_TESTS}" == "no" ]] ; then
         echo "Zipkin Web failed to start..."
@@ -93,9 +95,9 @@ if [[ -z "${DEPLOY_ONLY_APPS}" ]] ; then
     # Boot config-server
     READY_FOR_TESTS="no"
     echo "Waiting for the Config Server app to boot for [$(( WAIT_TIME * RETRIES ))] seconds"
-    cf s | grep "config-server" && cf ds -f "config-server"
-    deploy_app "config-server" && READY_FOR_TESTS="yes"
-    deploy_service "config-server"
+    cf s | grep "brewery-config-server" && cf ds -f "brewery-config-server"
+    deploy_app_with_name "config-server" "brewery-config-server" && READY_FOR_TESTS="yes"
+    deploy_service "brewery-config-server"
 
     if [[ "${READY_FOR_TESTS}" == "no" ]] ; then
         echo "Config server failed to start..."
@@ -109,9 +111,9 @@ fi
 
 cd $root
 echo -e "\n\nStarting brewery apps..."
-deploy_app "presenting"
-deploy_app "brewing"
-deploy_app "zuul"
+deploy_app_with_name "presenting" "brewery-presenting"
+deploy_app_with_name "brewing" "brewery-brewing"
+deploy_app_with_name "zuul" "brewery-zuul"
 
 # ====================================================
 

@@ -1,13 +1,13 @@
 ---
 applications:
-- name: zipkin-server
+- name: brewery-zipkin-server
   memory: 512M
   instances: 1
-  host: zipkin-server-${random-word}
+  host: brewery-zipkin-server
   path: build/libs/zipkin-server-1.0.0.jar
   services:
-    - rabbitmq
-    - mysql
+    - brewery-rabbitmq
+    - brewery-mysql
   env:
     SPRING_PROFILES_ACTIVE: cloud
     DEBUG: "true"
