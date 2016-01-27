@@ -10,7 +10,7 @@ function tail_log() {
     if [[ -z "${CLOUD_FOUNDRY}" ]] ; then
         tail -n $NUMBER_OF_LINES_TO_LOG build/"$1".log || echo "Failed to open log"
     else
-        cf logs "brewery-$1" --recent
+        cf logs "brewery-$1" --recent || echo "Failed to open log"
     fi
 }
 
@@ -107,16 +107,16 @@ function kill_all_apps() {
             kill_and_log "zipkin-server"
             docker kill $(docker ps -q) || echo "No running docker containers are left"
         else
-            reset "brewery-brewing"
-            reset "brewery-zuul"
-            reset "brewery-presenting"
-            yes | cf delete-service "brewery-config-server"
-            reset "brewery-config-server"
-            yes | cf delete-service "brewery-discovery"
-            reset "brewery-discovery"
-            reset "brewery-zipkin-server"
-            reset "brewery-zipkin-web"
-            yes | cf delete-orphaned-routes
+            reset "brewery-brewing" || echo "Failed to kill the app"
+            reset "brewery-zuul" || echo "Failed to kill the app"
+            reset "brewery-presenting" || echo "Failed to kill the app"
+            yes | cf delete-service "brewery-config-server" || echo "Failed to kill the app"
+            reset "brewery-config-server" || echo "Failed to kill the app"
+            yes | cf delete-service "brewery-discovery" || echo "Failed to kill the app"
+            reset "brewery-discovery" || echo "Failed to kill the app"
+            reset "brewery-zipkin-server" || echo "Failed to kill the app"
+            reset "brewery-zipkin-web" || echo "Failed to kill the app"
+            yes | cf delete-orphaned-routes || echo "Failed to delete routes"
     fi
     return 0
 }
@@ -341,6 +341,8 @@ if [[ -z "${CLOUD_FOUNDRY}" ]] ; then
         fi
 
         echo
+else
+    READY_FOR_TESTS="yes"
 fi
 
 # Run acceptance tests
