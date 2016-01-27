@@ -1,27 +1,35 @@
 #!/bin/bash
 
 set -o errexit
+source ${BUILD_DIRECTORY:-.}/scripts/cf-common.sh
 
 # Functions
 # Tails the log
 function tail_log() {
     echo -e "\n\nLogs of [$1] jar app"
-    tail -n $NUMBER_OF_LINES_TO_LOG build/"$1".log || echo "Failed to open log"
+    if [[ -z "${CLOUD_FOUNDRY}" ]] ; then
+        tail -n $NUMBER_OF_LINES_TO_LOG build/"$1".log || echo "Failed to open log"
+    else
+        cf logs "$1" --recent
+    fi
 }
 
 # Iterates over active containers and prints their logs to stdout
-function print_docker_logs() {
-    echo -e "\n\nSomething went wrong... Printing logs of active containers:\n"
-    docker ps | sed -n '1!p' > /tmp/containers.txt
-    while read field1 field2 field3; do
-      echo -e "\n\nContainer name [$field2] with id [$field1] logs: \n\n"
-      docker logs --tail=$NUMBER_OF_LINES_TO_LOG -t $field1
-    done < /tmp/containers.txt
+function print_logs() {
+    echo -e "\n\nSomething went wrong... Printing logs:\n"
+    if [[ -z "${CLOUD_FOUNDRY}" ]] ; then
+            docker ps | sed -n '1!p' > /tmp/containers.txt
+            while read field1 field2 field3; do
+              echo -e "\n\nContainer name [$field2] with id [$field1] logs: \n\n"
+              docker logs --tail=$NUMBER_OF_LINES_TO_LOG -t $field1
+            done < /tmp/containers.txt
+    fi
     tail_log "brewing"
     tail_log "zuul"
     tail_log "presenting"
     tail_log "config-server"
     tail_log "eureka"
+    tail_log "discovery"
     tail_log "zookeeper"
     tail_log "zipkin-server"
 }
@@ -88,15 +96,28 @@ function kill_and_log() {
 }
 # Kills all started aps
 function kill_all_apps() {
-    echo `pwd`
-    kill_and_log "brewing"
-    kill_and_log "zuul"
-    kill_and_log "presenting"
-    kill_and_log "config-server"
-    kill_and_log "eureka"
-    kill_and_log "zookeeper"
-    kill_and_log "zipkin-server"
-    docker kill $(docker ps -q) || echo "No running docker containers are left"
+    if [[ -z "${CLOUD_FOUNDRY}" ]] ; then
+            echo `pwd`
+            kill_and_log "brewing"
+            kill_and_log "zuul"
+            kill_and_log "presenting"
+            kill_and_log "config-server"
+            kill_and_log "eureka"
+            kill_and_log "zookeeper"
+            kill_and_log "zipkin-server"
+            docker kill $(docker ps -q) || echo "No running docker containers are left"
+        else
+            reset "brewing"
+            reset "zuul"
+            reset "presenting"
+            yes | cf delete-service "config-server"
+            reset "config-server"
+            yes | cf delete-service "discovery"
+            reset "discovery"
+            reset "zipkin-server"
+            reset "zipkin-web"
+            yes | cf delete-orphaned-routes
+    fi
     return 0
 }
 
@@ -133,7 +154,7 @@ MEM_ARGS="-Xmx64m -Xss1024k"
 BOM_VERSION_PROP_NAME="BOM_VERSION"
 
 # Parse the script arguments
-while getopts ":t:v:h:n:r:k:n:x:s:c" opt; do
+while getopts ":t:v:h:n:r:k:n:x:s:c:o" opt; do
     case $opt in
         t)
             WHAT_TO_TEST="${OPTARG}"
@@ -164,6 +185,9 @@ while getopts ":t:v:h:n:r:k:n:x:s:c" opt; do
             ;;
         c)
             CLOUD_FOUNDRY=1
+            ;;
+        o)
+            DEPLOY_ONLY_APPS=1
             ;;
         \?)
             echo "Invalid option: -$OPTARG" >&2
@@ -200,6 +224,7 @@ SKIP_BUILDING=${SKIP_BUILDING}
 SHOULD_START_RABBIT=${SHOULD_START_RABBIT}
 ACCEPTANCE_TEST_OPTS=${ACCEPTANCE_TEST_OPTS}
 CLOUD_FOUNDRY=${CLOUD_FOUNDRY}
+DEPLOY_ONLY_APPS=${DEPLOY_ONLY_APPS}
 
 EOF
 
@@ -216,9 +241,10 @@ export MEM_ARGS=$MEM_ARGS
 export SHOULD_START_RABBIT=$SHOULD_START_RABBIT
 export ACCEPTANCE_TEST_OPTS=$ACCEPTANCE_TEST_OPTS
 export CLOUD_FOUNDRY=$CLOUD_FOUNDRY
+export DEPLOY_ONLY_APPS=$DEPLOY_ONLY_APPS
 
 export -f tail_log
-export -f print_docker_logs
+export -f print_logs
 export -f netcat_port
 export -f netcat_local_port
 export -f curl_health_endpoint
@@ -272,47 +298,50 @@ fi
 
 if [[ "${INITIALIZATION_FAILED}" == "yes" ]] ; then
     echo "\n\nFailed to initialize the apps!"
-    print_docker_logs
+    print_logs
     kill_all_apps_if_switch_on
     exit 1
 fi
 
-# Wait for the apps to boot up
-APPS_ARE_RUNNING="no"
+if [[ -z "${CLOUD_FOUNDRY}" ]] ; then
 
-echo -e "\n\nWaiting for the apps to boot for [$(( WAIT_TIME * RETRIES ))] seconds"
-for i in $( seq 1 "${RETRIES}" ); do
-    sleep "${WAIT_TIME}"
-    curl -m 5 ${HEALTH_ENDPOINTS} && APPS_ARE_RUNNING="yes" && break
-    echo "Fail #$i/${RETRIES}... will try again in [${WAIT_TIME}] seconds"
-done
+        # Wait for the apps to boot up
+        APPS_ARE_RUNNING="no"
 
-if [[ "${APPS_ARE_RUNNING}" == "no" ]] ; then
-    echo "\n\nFailed to boot the apps!"
-    print_docker_logs
-    kill_all_apps_if_switch_on
-    exit 1
+        echo -e "\n\nWaiting for the apps to boot for [$(( WAIT_TIME * RETRIES ))] seconds"
+        for i in $( seq 1 "${RETRIES}" ); do
+            sleep "${WAIT_TIME}"
+            curl -m 5 ${HEALTH_ENDPOINTS} && APPS_ARE_RUNNING="yes" && break
+            echo "Fail #$i/${RETRIES}... will try again in [${WAIT_TIME}] seconds"
+        done
+
+        if [[ "${APPS_ARE_RUNNING}" == "no" ]] ; then
+            echo "\n\nFailed to boot the apps!"
+            print_logs
+            kill_all_apps_if_switch_on
+            exit 1
+        fi
+
+        # Wait for the apps to register in Service Discovery
+        READY_FOR_TESTS="no"
+
+        echo -e "\n\nChecking for the presence of all services in Service Discovery for [$(( WAIT_TIME * RETRIES ))] seconds"
+        for i in $( seq 1 "${RETRIES}" ); do
+            sleep "${WAIT_TIME}"
+            curl -m 5 http://${LOCALHOST}:9991/health | grep presenting |
+                grep brewing && READY_FOR_TESTS="yes" && break
+            echo "Fail #$i/${RETRIES}... will try again in [${WAIT_TIME}] seconds"
+        done
+
+        if [[ "${READY_FOR_TESTS}" == "no" ]] ; then
+            echo "\n\nThe apps failed to register in Service Discovery!"
+            print_logs
+            kill_all_apps_if_switch_on
+            exit 1
+        fi
+
+        echo
 fi
-
-# Wait for the apps to register in Service Discovery
-READY_FOR_TESTS="no"
-
-echo -e "\n\nChecking for the presence of all services in Service Discovery for [$(( WAIT_TIME * RETRIES ))] seconds"
-for i in $( seq 1 "${RETRIES}" ); do
-    sleep "${WAIT_TIME}"
-    curl -m 5 http://${LOCALHOST}:9991/health | grep presenting |
-        grep brewing && READY_FOR_TESTS="yes" && break
-    echo "Fail #$i/${RETRIES}... will try again in [${WAIT_TIME}] seconds"
-done
-
-if [[ "${READY_FOR_TESTS}" == "no" ]] ; then
-    echo "\n\nThe apps failed to register in Service Discovery!"
-    print_docker_logs
-    kill_all_apps_if_switch_on
-    exit 1
-fi
-
-echo
 
 # Run acceptance tests
 TESTS_PASSED="no"
@@ -336,7 +365,7 @@ if [[ "${TESTS_PASSED}" == "yes" ]] ; then
     exit 0
 else
     echo -e "\n\nTests failed..."
-    print_docker_logs
+    print_logs
     kill_all_apps_if_switch_on
     exit 1
 fi

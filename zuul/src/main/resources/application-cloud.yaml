@@ -1,2 +1,9 @@
 spring.rabbitmq.addresses: ${vcap.services.rabbitmq.credentials.uri}
-spring.cloud.zookeeper.connectString: ${vcap.services.discovery.credentials.uri}:2181
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: ${vcap.services.discovery.credentials.uri:http://127.0.0.1:8761}/eureka/
+  instance:
+    hostname: ${APPLICATION_DOMAIN}
+    nonSecurePort: 80

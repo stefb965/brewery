@@ -1,5 +1,3 @@
-spring.rabbitmq.addresses: ${vcap.services.rabbitmq.credentials.uri}
-
 eureka:
   client:
     serviceUrl:

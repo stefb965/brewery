@@ -6,7 +6,6 @@ applications:
   host: config-server-${random-word}
   path: build/libs/config-server-1.0.0.jar
   services:
-    - rabbitmq
     - discovery
   env:
     SPRING_PROFILES_ACTIVE: cloud

@@ -3,7 +3,7 @@ applications:
 - name: presenting
   memory: 512M
   instances: 1
-  host: presenting-${random-word}
+  host: presenting
   path: build/libs/presenting-1.0.0.jar
   services:
     - rabbitmq

@@ -1,9 +1,10 @@
+# Not working yet... has to be HTTP
 ---
 applications:
 - name: discovery
   memory: 512M
   instances: 1
-  host: zookeeper-${random-word}
+  host: discovery-${random-word}
   path: build/libs/zookeeper-1.0.0.jar
   env:
     SPRING_PROFILES_ACTIVE: cloud

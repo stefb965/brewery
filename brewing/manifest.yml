@@ -3,7 +3,7 @@ applications:
 - name: brewing
   memory: 512M
   instances: 1
-  host: brewing-${random-word}
+  host: brewing
   path: build/libs/brewing-1.0.0.jar
   services:
     - rabbitmq

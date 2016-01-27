@@ -3,7 +3,7 @@ applications:
 - name: zuul
   memory: 512M
   instances: 1
-  host: zuul-${random-word}
+  host: zuul
   path: build/libs/zuul-1.0.0.jar
   services:
     - rabbitmq
