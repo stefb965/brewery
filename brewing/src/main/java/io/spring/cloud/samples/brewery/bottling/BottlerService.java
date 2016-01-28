@@ -41,6 +41,8 @@ class BottlerService {
      */
     @HystrixCommand
     void bottle(Wort wort, String processId) {
+        log.info("I'm inside bottling. Current span [{}]",
+                SpanContextHolder.getCurrentSpan());
         Span span = tracer.startTrace("inside_bottling");
         try {
             notifyPresenting(processId);
@@ -51,6 +53,8 @@ class BottlerService {
     }
 
     void notifyPresenting(String processId) {
+        log.info("I'm inside bottling. Notifying presenting. Current span [{}]",
+                SpanContextHolder.getCurrentSpan());
         switch (TEST_CONFIG.get().getTestCommunicationType()) {
             case FEIGN:
                 callPresentingViaFeign(processId);

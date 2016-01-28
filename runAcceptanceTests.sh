@@ -133,6 +133,30 @@ function kill_all_apps_if_switch_on() {
     return 0
 }
 
+function print_usage() {
+cat <<EOF
+
+USAGE:
+
+You can use the following options:
+
+-t|--whattotest  - define what you want to test (e.g. SLEUTH, ZOOKEEPER)
+-v|--version - which version of BOM do you want to use? Defaults to Brixton snapshot
+-h|--healthhost - what is your health host? where is docker? defaults to localhost
+-l|--numberoflines - how many lines of logs of your app do you want to print? Defaults to 1000
+-r|--reset - do you want to reset the git repo of brewery? Defaults to "no"
+-k|--killattheend - should kill all the running apps at the end of execution? Defaults to "no"
+-n|--killnow - should not run all the logic but only kill the running apps? Defaults to "no"
+-x|--skiptests - should skip running of e2e tests? Defaults to "no"
+-s|--skipbuilding - should skip building of the projects? Defaults to "no"
+-c|--cloudfoundry - should run tests for cloud foundry? Defaults to "no"
+-o|--deployonlyapps - should deploy only the brewery business apps instead of the infra too? Defaults to "no"
+-d|--skipdeployment - should skip deployment of apps? Defaults to "no"
+
+EOF
+}
+
+
 # Variables
 CURRENT_DIR=`pwd`
 REPO_URL="${REPO_URL:-https://github.com/spring-cloud-samples/brewery.git}"
@@ -153,52 +177,68 @@ MEM_ARGS="-Xmx64m -Xss1024k"
 
 BOM_VERSION_PROP_NAME="BOM_VERSION"
 
-# Parse the script arguments
-while getopts ":t:v:h:n:r:k:n:x:s:c:o" opt; do
-    case $opt in
-        t)
-            WHAT_TO_TEST="${OPTARG}"
-            ;;
-        v)
-            VERSION="${OPTARG}"
-            ;;
-        h)
-            HEALTH_HOST="${OPTARG}"
-            ;;
-        l)
-            NUMBER_OF_LINES_TO_LOG="${OPTARG}"
-            ;;
-        r)
-            RESET=1
-            ;;
-        k)
-            KILL_AT_THE_END=1
-            ;;
-        n)
-            KILL_NOW=1
-            ;;
-        x)
-            NO_TESTS=1
-            ;;
-        s)
-            SKIP_BUILDING=1
-            ;;
-        c)
-            CLOUD_FOUNDRY=1
-            ;;
-        o)
-            DEPLOY_ONLY_APPS=1
-            ;;
-        \?)
-            echo "Invalid option: -$OPTARG" >&2
-            exit 1
-            ;;
-        :)
-            echo "Option -$OPTARG requires an argument." >&2
-            exit 1
-            ;;
-    esac
+if [[ $# == 0 ]] ; then
+    print_usage
+    exit 0
+fi
+
+while [[ $# > 0 ]]
+do
+key="$1"
+case $key in
+    -t|--whattotest)
+    WHAT_TO_TEST="$2"
+    shift # past argument
+    ;;
+    -v|--version)
+    VERSION="$2"
+    shift # past argument
+    ;;
+    -h|--healthhost)
+    HEALTH_HOST="$2"
+    shift # past argument
+    ;;
+    -l|--numberoflines)
+    NUMBER_OF_LINES_TO_LOG="$2"
+    shift # past argument
+    ;;
+    -r|--reset)
+    RESET="yes"
+    ;;
+    -k|--killattheend)
+    KILL_AT_THE_END="yes"
+    ;;
+    -n|--killnow)
+    KILL_NOW="yes"
+    ;;
+    -x|--skiptests)
+    NO_TESTS="yes"
+    ;;
+    -s|--skipbuilding)
+    SKIP_BUILDING="yes"
+    ;;
+    -c|--cloudfoundry)
+    CLOUD_FOUNDRY="yes"
+    ;;
+    -o|--deployonlyapps)
+    DEPLOY_ONLY_APPS="yes"
+    ;;
+    -d|--skipdeployment)
+    SKIP_DEPLOYMENT="yes"
+    ;;
+    --help)
+    print_usage
+    exit 0
+    ;;
+    *)
+    echo "Invalid option: [$1]"
+    print_usage
+    exit 1
+    ;;
+esac
+shift # past argument or value
 done
+
 
 [[ -z "${WHAT_TO_TEST}" ]] && WHAT_TO_TEST=ZOOKEEPER
 [[ -z "${VERSION}" ]] && VERSION="${DEFAULT_VERSION}"
@@ -225,6 +265,7 @@ SHOULD_START_RABBIT=${SHOULD_START_RABBIT}
 ACCEPTANCE_TEST_OPTS=${ACCEPTANCE_TEST_OPTS}
 CLOUD_FOUNDRY=${CLOUD_FOUNDRY}
 DEPLOY_ONLY_APPS=${DEPLOY_ONLY_APPS}
+SKIP_DEPLOYMENT=${SKIP_DEPLOYMENT}
 
 EOF
 
@@ -242,6 +283,7 @@ export SHOULD_START_RABBIT=$SHOULD_START_RABBIT
 export ACCEPTANCE_TEST_OPTS=$ACCEPTANCE_TEST_OPTS
 export CLOUD_FOUNDRY=$CLOUD_FOUNDRY
 export DEPLOY_ONLY_APPS=$DEPLOY_ONLY_APPS
+export SKIP_DEPLOYMENT=$SKIP_DEPLOYMENT
 
 export -f tail_log
 export -f print_logs
@@ -288,7 +330,8 @@ if [[ -z "${SKIP_BUILDING}" ]] ; then
     ./gradlew clean build --parallel --no-daemon
 fi
 
-# Run the initialization script
+
+# Deploy apps
 INITIALIZATION_FAILED="yes"
 if [[ -z "${CLOUD_FOUNDRY}" ]] ; then
         . ./docker-compose-$WHAT_TO_TEST.sh && INITIALIZATION_FAILED="no"
@@ -297,11 +340,12 @@ if [[ -z "${CLOUD_FOUNDRY}" ]] ; then
 fi
 
 if [[ "${INITIALIZATION_FAILED}" == "yes" ]] ; then
-    echo "\n\nFailed to initialize the apps!"
+    echo -e "\n\nFailed to initialize the apps!"
     print_logs
     kill_all_apps_if_switch_on
     exit 1
 fi
+
 
 if [[ -z "${CLOUD_FOUNDRY}" ]] ; then
 
