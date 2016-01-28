@@ -26,7 +26,8 @@ if [[ -z "${SKIP_DEPLOYMENT}" ]] ; then
 
         READY_FOR_TESTS="no"
         echo "Waiting for Eureka to boot for [$(( WAIT_TIME * RETRIES ))] seconds"
-        cf s | grep "brewery-discovery" && cf ds -f "brewery-discovery"
+        yes | cf delete-service "brewery-discovery" || echo "Failed to kill the app...  Continuing with the script"
+        cf s | grep "brewery-discovery" && cf ds -f "brewery-discovery" || echo "Failed to delete the app...  Continuing with the script"
         deploy_app_with_name "eureka" "brewery-discovery" && READY_FOR_TESTS="yes"
         deploy_service "brewery-discovery" && READY_FOR_TESTS="yes"
 
@@ -96,9 +97,10 @@ if [[ -z "${SKIP_DEPLOYMENT}" ]] ; then
         # Boot config-server
         READY_FOR_TESTS="no"
         echo "Waiting for the Config Server app to boot for [$(( WAIT_TIME * RETRIES ))] seconds"
-        cf s | grep "brewery-config-server" && cf ds -f "brewery-config-server"
+        yes | cf delete-service "brewery-config-server" || echo "Failed to kill the app"
+        cf s | grep "brewery-config-server" && cf ds -f "brewery-config-server" || echo "Failed to delete the app...  Continuing with the script"
         deploy_app_with_name "config-server" "brewery-config-server" && READY_FOR_TESTS="yes"
-        deploy_service "brewery-config-server"
+        deploy_service "brewery-config-server" || echo "Failed to bind the service... Continuing with the script"
 
         if [[ "${READY_FOR_TESTS}" == "no" ]] ; then
             echo "Config server failed to start..."

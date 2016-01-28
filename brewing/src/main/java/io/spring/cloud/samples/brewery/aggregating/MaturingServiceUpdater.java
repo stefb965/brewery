@@ -34,13 +34,13 @@ class MaturingServiceUpdater {
     public Ingredients updateIfLimitReached(Ingredients ingredients, String processId) {
         if (ingredientsMatchTheThreshold(ingredients)) {
             log.info("Ingredients match the threshold [{}] - time to notify the maturing service! Span info [{}]",
-                    ingredientsProperties.getThreshold(), SpanContextHolder.getCurrentSpan());
+                    ingredientsProperties.getThreshold(), SpanContextHolder.getCurrentSpan().getTraceId());
             eventGateway.emitEvent(Event.builder().eventType(EventType.BREWING_STARTED).processId(processId).build());
             notifyMaturingService(ingredients, processId);
             ingredientWarehouse.useIngredients(ingredientsProperties.getThreshold());
         }
         Ingredients currentState = ingredientWarehouse.getCurrentState();
-        log.info("Current state of ingredients is [{}]. Current span [{}]", currentState, SpanContextHolder.getCurrentSpan());
+        log.info("Current state of ingredients is [{}]. Current traceid [{}]", currentState, SpanContextHolder.getCurrentSpan().getTraceId());
         return currentState;
     }
 

@@ -7,3 +7,4 @@ eureka:
   instance:
     hostname: ${APPLICATION_DOMAIN}
     nonSecurePort: 80
+

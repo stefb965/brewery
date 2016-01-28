@@ -110,7 +110,7 @@ configure(subprojects) {
     }
 }
 
-configure(subprojects - zipkinServerProject - acceptanceTestsProject - zookeeperServerProject) {
+configure(subprojects - zipkinServerProject - acceptanceTestsProject - zookeeperServerProject - configServerProject) {
 
     dependencies {
         compile 'org.projectlombok:lombok:1.16.6'

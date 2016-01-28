@@ -72,10 +72,10 @@ function curl_local_health_endpoint() {
 function java_jar() {
     local APP_JAVA_PATH=$1/build/libs
     local EXPRESSION="nohup $JAVA_HOME/bin/java $2 $MEM_ARGS -jar $APP_JAVA_PATH/*.jar >$APP_JAVA_PATH/nohup.log &"
+    echo -e "\nTrying to run [$EXPRESSION]"
     eval $EXPRESSION
     pid=$!
     echo $pid > $APP_JAVA_PATH/app.pid
-    echo -e "\nJust started [$EXPRESSION]"
     echo -e "[$1] process pid is [$pid]"
     echo -e "System props are [$2]"
     echo -e "Logs are under [build/$1.log] or from nohup [$APP_JAVA_PATH/nohup.log]\n"

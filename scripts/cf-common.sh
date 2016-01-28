@@ -43,11 +43,8 @@ function deploy_app_with_name(){
     cd ..
 }
 
-function deploy_service(){
-    N=$1
-    D=`app_domain $N`
-    JSON='{"uri":"http://'$D'"}'
-    cf create-user-provided-service $N -p $JSON
+function deploy_app_with_name_parallel(){
+    xargs -n 2 -P 4 bash -c 'deploy_app_with_name "$@"'
 }
 
 function deploy_service(){
