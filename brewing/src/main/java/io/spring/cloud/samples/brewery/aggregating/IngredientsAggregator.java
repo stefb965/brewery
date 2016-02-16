@@ -4,6 +4,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 
 import org.springframework.cloud.sleuth.Tracer;
+import org.springframework.cloud.sleuth.instrument.TraceKeys;
 import org.springframework.cloud.sleuth.instrument.async.TraceableExecutorService;
 
 import io.spring.cloud.samples.brewery.common.TestConfigurationHolder;
@@ -23,16 +24,17 @@ class IngredientsAggregator {
     private final IngredientsCollector ingredientsCollector;
     private final Tracer tracer;
     private final EventGateway eventGateway;
+    private final TraceKeys traceKeys;
 
-    IngredientsAggregator(IngredientWarehouse ingredientWarehouse,
-                          MaturingServiceUpdater maturingServiceUpdater,
-                          IngredientsCollector ingredientsCollector,
-                          Tracer tracer, EventGateway eventGateway) {
+    IngredientsAggregator(IngredientWarehouse ingredientWarehouse, MaturingServiceUpdater maturingServiceUpdater,
+            IngredientsCollector ingredientsCollector, Tracer tracer,
+            EventGateway eventGateway, TraceKeys traceKeys) {
         this.ingredientWarehouse = ingredientWarehouse;
         this.ingredientsCollector = ingredientsCollector;
         this.maturingUpdater = maturingServiceUpdater;
         this.tracer = tracer;
         this.eventGateway = eventGateway;
+        this.traceKeys = traceKeys;
     }
 
     // TODO: Consider simplifying the case by removing the DB (always matches threshold)
@@ -55,7 +57,7 @@ class IngredientsAggregator {
                     return null;
                 }, new TraceableExecutorService(Executors.newFixedThreadPool(5),
                 tracer,
-                "async:"+getClass().getSimpleName()+"#method=fetchIngredients"));
+                traceKeys));
         // block to perform the request (as I said the example is stupid)
         completableFuture.get();
         eventGateway.emitEvent(Event.builder().eventType(EventType.INGREDIENTS_ORDERED).processId(processId).build());
