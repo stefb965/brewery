@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 package io.spring.cloud.samples.brewery.acceptance.common
+
 import groovy.json.JsonSlurper
 import io.spring.cloud.samples.brewery.acceptance.common.sleuth.SleuthHashing
-import io.spring.cloud.samples.brewery.acceptance.common.tech.ExceptionLoggingAsyncRestTemplate
 import io.spring.cloud.samples.brewery.acceptance.common.tech.ExceptionLoggingRestTemplate
 import io.spring.cloud.samples.brewery.acceptance.common.tech.TestConfiguration
 import io.spring.cloud.samples.brewery.acceptance.model.CommunicationType
@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.SpringApplicationContextLoader
 import org.springframework.cloud.sleuth.Span
+import org.springframework.cloud.sleuth.TraceHeaders
 import org.springframework.http.*
 import org.springframework.test.context.ContextConfiguration
 import org.springframework.web.client.RestTemplate
@@ -43,7 +44,7 @@ import static java.util.concurrent.TimeUnit.SECONDS
 @ContextConfiguration(classes = TestConfiguration, loader = SpringApplicationContextLoader)
 abstract class AbstractBreweryAcceptanceSpec extends Specification implements SleuthHashing {
 
-	public static final String TRACE_ID_HEADER_NAME = 'X-TRACE-ID'
+	public static final String TRACE_ID_HEADER_NAME = TraceHeaders.ZIPKIN_TRACE_ID_HEADER_NAME
 	public static final Logger log = LoggerFactory.getLogger(AbstractBreweryAcceptanceSpec)
 
 	private static final List<String> APP_NAMES = ['presenting', 'brewing', 'zuul']
@@ -62,7 +63,6 @@ abstract class AbstractBreweryAcceptanceSpec extends Specification implements Sl
 	@Value('${presenting.url:http://localhost:9991}') String presentingUrl
 	@Value('${zipkin.query.port:9411}') Integer zipkinQueryPort
 	@Value('${LOCAL_URL:http://localhost}') String zipkinQueryUrl
-	private final ExceptionLoggingAsyncRestTemplate asyncRestTemplate = new ExceptionLoggingAsyncRestTemplate();
 
 	def setup() {
 		log.info("Starting test")
