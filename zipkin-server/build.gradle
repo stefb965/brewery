@@ -1,4 +1,4 @@
-moduleEnabled(whatToTest('SLEUTH_STREAM'))
+//moduleEnabled(whatToTest('SLEUTH_STREAM'))
 
 dependencies {
     compile "org.springframework.integration:spring-integration-jmx"
