@@ -137,9 +137,9 @@ abstract class AbstractBreweryAcceptanceSpec extends Specification implements Sl
 					acc.put(json.parent, list)
 					return acc
 				}
-				assert parentsAndChildren['presenting'].containsAll(['brewing'])
-				assert parentsAndChildren['brewing'].containsAll(['zuul', 'reporting'])
-				assert parentsAndChildren['zuul'].containsAll(['ingredients'])
+				assert parentsAndChildren['presenting'] == ['brewing']
+				assert parentsAndChildren['brewing'] == ['brewing', 'zuul', 'reporting', 'presenting']
+				assert parentsAndChildren['zuul'] == ['ingredients']
 			}
 		})
 	}
