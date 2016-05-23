@@ -250,6 +250,7 @@ You can use the following options:
 -o|--deployonlyapps - should deploy only the brewery business apps instead of the infra too? Defaults to "no"
 -d|--skipdeployment - should skip deployment of apps? Defaults to "no"
 -p|--cloudfoundryprefix - provides the prefix to the brewery app name. Defaults to 'brewery'
+-f|--kafka - uses Kafka instead of RabbitMQ
 
 EOF
 }
@@ -343,6 +344,9 @@ case $key in
     CLOUD_PREFIX="$2"
     shift # past argument
     ;;
+    -f|--kafka)
+    KAFKA="yes"
+    ;;
     --help)
     print_usage
     exit 0
@@ -385,6 +389,7 @@ CLOUD_FOUNDRY=${CLOUD_FOUNDRY}
 DEPLOY_ONLY_APPS=${DEPLOY_ONLY_APPS}
 SKIP_DEPLOYMENT=${SKIP_DEPLOYMENT}
 CLOUD_PREFIX=${CLOUD_PREFIX}
+KAFKA=${KAFKA:-"no"}
 
 EOF
 
@@ -409,6 +414,7 @@ export DEPLOY_ONLY_APPS=$DEPLOY_ONLY_APPS
 export SKIP_DEPLOYMENT=$SKIP_DEPLOYMENT
 export CLOUD_PREFIX=$CLOUD_PREFIX
 export JAVA_PATH_TO_BIN=$JAVA_PATH_TO_BIN
+export KAFKA=$KAFKA
 
 export -f login
 export -f app_domain
@@ -469,8 +475,13 @@ APP_BUILDING_RETRIES=3
 APP_WAIT_TIME=1
 APP_FAILED="yes"
 if [[ -z "${SKIP_BUILDING}" ]] ; then
+    PARAMS="--parallel --no-daemon";
+    if [[ "${KAFKA}" == "yes" ]] ; then
+        echo "Will use Kafka as a message broker"
+        PARAMS="${PARAMS} -Pkafka"
+    fi
     for i in $( seq 1 "${APP_BUILDING_RETRIES}" ); do
-          ./gradlew clean build --parallel --no-daemon && APP_FAILED="no" && break
+          ./gradlew clean build $PARAMS && APP_FAILED="no" && break
           echo "Fail #$i/${APP_BUILDING_RETRIES}... will try again in [${APP_WAIT_TIME}] seconds"
     done
 else

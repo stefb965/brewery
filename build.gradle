@@ -62,6 +62,9 @@ configure(subprojects) {
             return propName.equalsIgnoreCase(project.gradle.startParameter.systemPropertiesArgs.get(whatToTestProp)) ?:
                     propName.equalsIgnoreCase(System.getenv(whatToTestProp))
         }
+        propOrSysEnvPresent = { String propName ->
+            project.hasProperty(propName) || systemPropsFromGradle(propName) || System.getenv(propName.toUpperCase())
+        }
         moduleEnabled = { boolean enabled ->
             if (!enabled) {
                 project.tasks*.enabled = false
@@ -130,7 +133,7 @@ configure(subprojects - zipkinServerProject - acceptanceTestsProject - zookeeper
         compile "org.springframework.cloud:spring-cloud-starter-sleuth"
         compile "org.springframework.cloud:spring-cloud-starter-config"
         compile "org.springframework.cloud:spring-cloud-starter-hystrix"
-        compile "org.springframework.cloud:spring-cloud-starter-stream-rabbit"
+        compile "org.springframework.cloud:spring-cloud-starter-stream-${propOrSysEnvPresent('kafka') ? 'kafka' : 'rabbit'}"
         if (!whatToTest('SLEUTH')) { compile "org.springframework.cloud:spring-cloud-sleuth-stream" }
         compile "org.springframework.amqp:spring-amqp:${amqpVersion}"
         compile "io.dropwizard.metrics:metrics-core"

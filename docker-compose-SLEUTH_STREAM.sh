@@ -8,7 +8,7 @@ docker-compose -f $dockerComposeFile build
 
 if [[ "${SHOULD_START_RABBIT}" == "yes" ]] ; then
     echo -e "\n\nBooting up RabbitMQ"
-    docker-compose -f $dockerComposeFile up -d rabbitmq
+    docker-compose -f $dockerComposeFile up -d
 fi
 
 READY_FOR_TESTS="no"
@@ -24,7 +24,12 @@ fi
 READY_FOR_TESTS="no"
 PORT_TO_CHECK=8761
 echo "Waiting for Eureka to boot for [$(( WAIT_TIME * RETRIES ))] seconds"
-java_jar "eureka"
+if [[ "${KAFKA}" == "yes" ]] ; then
+    java_jar "eureka" "-Dspring.profiles.active=kafka"
+else
+    java_jar "eureka"
+fi
+
 netcat_local_port $PORT_TO_CHECK && READY_FOR_TESTS="yes"
 
 if [[ "${READY_FOR_TESTS}" == "no" ]] ; then
@@ -36,6 +41,9 @@ fi
 READY_FOR_TESTS="no"
 PORT_TO_CHECK=9411
 echo "Waiting for the Zipkin Server app to boot for [$(( WAIT_TIME * RETRIES ))] seconds"
+if [[ "${KAFKA}" == "yes" ]] ; then
+    SYSTEM_PROPS="${SYSTEM_PROPS} -Dspring.profiles.active=kafka"
+fi
 java_jar "zipkin-server" "${SYSTEM_PROPS} -Dzipkin.collector.sample-rate=1.0 -Dzipkin.query.lookback=86400000"
 curl_local_health_endpoint $PORT_TO_CHECK  && READY_FOR_TESTS="yes"
 
@@ -50,7 +58,7 @@ echo -e "\n\nZipkin Web is available under 9411 port"
 READY_FOR_TESTS="no"
 PORT_TO_CHECK=8888
 echo "Waiting for the Config Server app to boot for [$(( WAIT_TIME * RETRIES ))] seconds"
-java_jar "config-server"
+java_jar "config-server" "$SYSTEM_PROPS"
 curl_local_health_endpoint $PORT_TO_CHECK  && READY_FOR_TESTS="yes"
 
 if [[ "${READY_FOR_TESTS}" == "no" ]] ; then
