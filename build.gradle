@@ -127,8 +127,6 @@ configure(subprojects - zipkinServerProject - acceptanceTestsProject - zookeeper
 
     dependencies {
         compile 'org.projectlombok:lombok:1.16.6'
-        compile "org.springframework.boot:spring-boot-starter-web"
-        compile "org.springframework:spring-web"
         compile 'org.apache.tomcat.embed:tomcat-embed-core:8.0.23'
         compile "org.springframework.cloud:spring-cloud-starter-sleuth"
         compile "org.springframework.cloud:spring-cloud-starter-config"
@@ -174,9 +172,7 @@ configure(subprojects - techProjects - commonZipkinProject) {
         compile(commonProject)
         if (whatToTest('SLEUTH')) { compile commonZipkinProject }
 
-        compile "org.springframework.boot:spring-boot-starter-web"
         compile "org.springframework.boot:spring-boot-starter-actuator"
-        compile "org.springframework:spring-context-support"
         compile 'com.fasterxml.jackson.core:jackson-databind'
         if (!whatToTest('CONSUL') && !whatToTest('EUREKA') && !whatToTest('SLEUTH_STREAM')) {
             compile "org.springframework.cloud:spring-cloud-starter-zookeeper-discovery"

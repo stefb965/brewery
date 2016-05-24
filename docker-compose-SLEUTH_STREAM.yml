@@ -3,11 +3,3 @@ rabbitmq:
   ports:
     - 9672:5672
     - 15672
-
-kafka:
-  image: spotify/kafka
-  ports:
-    - 9092:9092
-    - 2181:2181
-  environment:
-    ADVERTISED_PORT: 9092

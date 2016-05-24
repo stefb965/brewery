@@ -200,6 +200,7 @@ function kill_all_apps() {
             kill_all_apps_with_port
             if [[ -z "${KILL_NOW_APPS}" ]] ; then
                 docker kill $(docker ps -q) || echo "No running docker containers are left"
+                docker stop `docker ps -a -q --filter="image=spotify/kafka"` || echo "No docker with Kafka was running - won't stop anything"
             fi
         else
             reset "${CLOUD_PREFIX}-brewing" || echo "Failed to kill the app"
@@ -415,6 +416,7 @@ export SKIP_DEPLOYMENT=$SKIP_DEPLOYMENT
 export CLOUD_PREFIX=$CLOUD_PREFIX
 export JAVA_PATH_TO_BIN=$JAVA_PATH_TO_BIN
 export KAFKA=$KAFKA
+export DEFAULT_HEALTH_HOST=$DEFAULT_HEALTH_HOST
 
 export -f login
 export -f app_domain

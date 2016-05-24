@@ -7,18 +7,25 @@ docker-compose -f $dockerComposeFile kill
 docker-compose -f $dockerComposeFile build
 
 if [[ "${SHOULD_START_RABBIT}" == "yes" ]] ; then
-    echo -e "\n\nBooting up RabbitMQ"
-    docker-compose -f $dockerComposeFile up -d
+    if [[ "${KAFKA}" == "yes" ]] ; then
+        docker stop `docker ps -a -q --filter="image=spotify/kafka"` || echo "No docker with Kafka was running - won't stop anything"
+        docker run -d -p 2181:2181 -p 9092:9092 --env ADVERTISED_HOST="${DEFAULT_HEALTH_HOST}" --env ADVERTISED_PORT=9092 spotify/kafka
+    else
+        echo -e "\n\nBooting up RabbitMQ"
+        docker-compose -f $dockerComposeFile up -d
+    fi
 fi
 
-READY_FOR_TESTS="no"
-PORT_TO_CHECK=9672
-echo "Waiting for RabbitMQ to boot for [$(( WAIT_TIME * RETRIES ))] seconds"
-netcat_port $PORT_TO_CHECK && READY_FOR_TESTS="yes"
+if [[ "${KAFKA}" != "yes" ]] ; then
+    READY_FOR_TESTS="no"
+    PORT_TO_CHECK=9672
+    echo "Waiting for RabbitMQ to boot for [$(( WAIT_TIME * RETRIES ))] seconds"
+    netcat_port $PORT_TO_CHECK && READY_FOR_TESTS="yes"
 
-if [[ "${READY_FOR_TESTS}" == "no" ]] ; then
-    echo "RabbitMQ failed to start..."
-    exit 1
+    if [[ "${READY_FOR_TESTS}" == "no" ]] ; then
+        echo "RabbitMQ failed to start..."
+        exit 1
+    fi
 fi
 
 READY_FOR_TESTS="no"
