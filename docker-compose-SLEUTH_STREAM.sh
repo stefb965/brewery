@@ -7,13 +7,30 @@ docker-compose -f $dockerComposeFile kill
 docker-compose -f $dockerComposeFile build
 
 if [[ "${SHOULD_START_RABBIT}" == "yes" ]] ; then
+  if [[ "${KAFKA}" == "yes" ]] ; then
+    echo "Starting Zookeeper for Kafka"
+    READY_FOR_TESTS="no"
+    PORT_TO_CHECK=2181
+    echo "Waiting for Zookeeper to boot for [$(( WAIT_TIME * RETRIES ))] seconds"
+    java_jar "zookeeper"
+    netcat_local_port $PORT_TO_CHECK && READY_FOR_TESTS="yes"
+
+    if [[ "${READY_FOR_TESTS}" == "no" ]] ; then
+        echo "Zookeeper failed to start..."
+        exit 1
+    fi
+
+  fi
+fi
+
+if [[ "${SHOULD_START_RABBIT}" == "yes" ]] ; then
     if [[ "${KAFKA}" == "yes" ]] ; then
         echo -e "\nThe following containers are running:"
         docker ps
         echo -e "\nWill try to stop kafka if it's running"
-        docker stop `docker ps -a -q --filter="image=spotify/kafka"` || echo "No docker with Kafka was running - won't stop anything"
+        docker stop `docker ps -a -q --filter="image=wurstmeister/kafka"` || echo "No docker with Kafka was running - won't stop anything"
         echo -e "\nTrying to run Kafka with Zookeeper in Docker\n"
-        docker run -d -p 2181:2181 -p 9092:9092 --env ADVERTISED_HOST="${DEFAULT_HEALTH_HOST}" --env ADVERTISED_PORT=9092 spotify/kafka
+        docker run -d -p 2181:2181 -p 9092:9092 --env KAFKA_ADVERTISED_HOST_NAME="${DEFAULT_HEALTH_HOST}" --env KAFKA_ADVERTISED_PORT=9092 --env KAFKA_ZOOKEEPER_CONNECT=localhost:2181 wurstmeister/kafka
     else
         echo -e "\n\nBooting up RabbitMQ"
         docker-compose -f $dockerComposeFile up -d
