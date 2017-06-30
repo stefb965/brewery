@@ -14,7 +14,7 @@ dependencies {
     testCompile( 'com.athaydes:spock-reports:1.2.7' ) {
         transitive = false // this avoids affecting your version of Groovy/Spock
     }
-    testCompile "org.spockframework:spock-spring"
+    testCompile "org.spockframework:spock-spring:1.0-groovy-2.4"
 }
 
 test {

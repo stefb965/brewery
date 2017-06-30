@@ -14,7 +14,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath "org.springframework.boot:spring-boot-gradle-plugin:${hasProperty("BOOT_VERSION") ? "${project.property("BOOT_VERSION")}" : "1.5.4.RELEASE" }"
+        classpath "org.springframework.boot:spring-boot-gradle-plugin:${hasProperty("BOOT_VERSION") ? "${project.property("BOOT_VERSION")}" : "2.0.0.BUILD-SNAPSHOT" }"
         if (hasProperty("docker")) { classpath 'se.transmode.gradle:gradle-docker:1.2' }
     }
 }
@@ -44,6 +44,7 @@ configure(subprojects) {
     apply plugin: 'eclipse'
     apply plugin: 'idea'
     apply plugin: 'org.springframework.boot'
+    apply plugin: 'io.spring.dependency-management'
 
     ext {
         dockerConfiguration = { int port ->
@@ -167,8 +168,15 @@ configure(zipkinRelatedProjects) {
 
 configure(nonDockerProjects) {
 
-    bootRepackage {
-        enabled = false
+    if (project.hasProperty("BOOT_VERSION") ?
+            project.property("BOOT_VERSION").contains("2.0.0") : false) {
+        bootJar {
+            enabled = false
+        }
+    } else {
+        bootRepackage {
+            enabled = false
+        }
     }
 
     bootRun {
@@ -218,7 +226,7 @@ configure(subprojects - techProjects - commonZipkinProject - commonZipkinStreamP
     }
 
     wrapper {
-        gradleVersion '3.3'
+        gradleVersion '3.4.1'
     }
 
     bootRun {
